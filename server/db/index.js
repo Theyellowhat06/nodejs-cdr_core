@@ -1,15 +1,15 @@
 var mysql = require('mysql');
 
 var con = mysql.createConnection({
-  host: "localhost",
-  user: "cdr",
-  password: "Cdr!@#",
-  database: "cdr"
+    host: "localhost",
+    user: "cdr_user",
+    password: "Cdr!@#",
+    database: "cdr_db"
 });
 con.connect((error) => {
-    if(error){
+    if (error) {
         console.log(error)
-    }else{
+    } else {
         console.log("db connected successfully")
     }
 })
