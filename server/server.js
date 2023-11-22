@@ -10,6 +10,7 @@ var cors = require("cors");
 
 const app = express();
 app.use(cors());
+app.use(express.json({ limit: "50mb" }));
 
 const hostname = "127.0.0.1";
 const port = 3050;

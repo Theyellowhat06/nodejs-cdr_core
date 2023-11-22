@@ -13,7 +13,7 @@ router.get("/callers", (req, res) => {
   );
   // var sql = `select id, fname, lname, username, permission from users where username = ${ss.escape(body.username)} and password = ${ss.escape(body.password)}`;
   console.log("query: " + sql);
-  con.query(sql, (err, result, fields) => {
+  con.query(sql, async (err, result, fields) => {
     if (err) {
       res.json({
         success: false,
@@ -66,6 +66,88 @@ router.post("/calls", (req, res) => {
       }
     }
   });
+});
+const sleep = (ms) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
+const formatExcelDate = (dateNumber) => {
+  if (typeof dateNumber === "string") return dateNumber;
+  console.log(dateNumber);
+  const date = new Date((dateNumber - 25569) * 86400 * 1000);
+  console.log(date);
+  return `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
+    .getHours()
+    .toString()
+    .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+};
+router.post("/excel_import", async (req, res) => {
+  const body = req.body;
+  // console.log(body.data);
+  console.log(body.data[0]);
+  console.log(body.data[0]["Caller id"]);
+
+  const sql = ss.format(
+    "insert into cdr(Caller_id, Receiver_id, Duration_s, Caller_company, Receiver_company, Timestamp) values ?",
+    [
+      body.data.map((d) => {
+        return [
+          d["Caller id"],
+          d["Receiver id"],
+          d["Duration s."],
+          d["Caller company"],
+          d["Receiver company"],
+          formatExcelDate(d["Timestamp"]),
+        ];
+      }),
+    ]
+  );
+
+  // console.log(sql);
+
+  con.query(sql, (err, result, fields) => {
+    if (err) {
+      console.log(err.message);
+      res.json({
+        success: false,
+        msg: "parameter invalid",
+      });
+    } else {
+      res.json({ success: true });
+    }
+  });
+
+  // const sql = ss.format(
+  //   "select distinct Caller_id, Receiver_id, Duration_s from cdr where Caller_id in (?)",
+  //   [body.ids]
+  // );
+  // // var sql = `select id, fname, lname, username, permission from users where username = ${ss.escape(body.username)} and password = ${ss.escape(body.password)}`;
+  // console.log("query: " + sql);
+  // con.query(sql, (err, result, fields) => {
+  //   if (err) {
+  //     res.json({
+  //       success: false,
+  //       msg: "parameter invalid",
+  //     });
+  //   } else {
+  //     if (result.length > 0) {
+  //       console.log("hoho");
+  //       res.json({
+  //         success: true,
+  //         result: result,
+  //       });
+  //     } else {
+  //       res.json({
+  //         success: true,
+  //         msg: "Хэрэглэгчийн нэр эсвэл нууц үг буруу байна",
+  //       });
+  //     }
+  //   }
+  // });
 });
 
 module.exports = router;
