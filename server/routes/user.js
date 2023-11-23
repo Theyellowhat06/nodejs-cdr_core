@@ -155,4 +155,22 @@ router.get('/calls_by_receiver', (req, res) => {
   });
 })
 
+router.post("/remove_all_records", async (req, res) => {
+
+  const sql = ss.format(
+    "delete from cdr where id > 0",
+  );
+
+  con.query(sql, (err, result, fields) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: err.message,
+      });
+    } else {
+      res.json({ success: true });
+    }
+  });
+});
+
 module.exports = router;
