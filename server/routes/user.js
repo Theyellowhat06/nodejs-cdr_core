@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const con = require("../db/index");
+const con = require("../db/index").default;
 const ss = require("sqlstring");
 
 const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;

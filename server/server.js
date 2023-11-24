@@ -6,6 +6,8 @@ const prof = require("./routes/prof");
 const teacher = require("./routes/teacher");
 const student = require("./routes/student");
 const schedule = require("./routes/schedule");
+const dotenv = require('dotenv');
+dotenv.config();
 var cors = require("cors");
 
 const app = express();

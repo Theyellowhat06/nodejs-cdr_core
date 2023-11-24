@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const con = require('../db/index');
+const con = require('../db/index').default;
 const ss = require('sqlstring');
 
 const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
@@ -9,25 +9,25 @@ const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 router.post('/getAll', (req, res) => {
     var body = req.body
     console.log(body)
-    try{
+    try {
         jwt.verify(body.token, key)
         var sql = `select * from prof order by id desc`;
-            console.log("query: "+sql)
-            con.query(sql, (err, result, fields) => {
-                if(err){
-                    res.json({
-                        success: false,
-                        msg: "parameter invalid"
-                    })
-                }else{
-                    
-                    res.json({
-                        success: true,
-                        result: result,
-                    })
-                }
-            })
-    }catch{
+        console.log("query: " + sql)
+        con.query(sql, (err, result, fields) => {
+            if (err) {
+                res.json({
+                    success: false,
+                    msg: "parameter invalid"
+                })
+            } else {
+
+                res.json({
+                    success: true,
+                    result: result,
+                })
+            }
+        })
+    } catch {
         res.json({
             success: false,
             msg: "parameter invalid"
@@ -38,17 +38,17 @@ router.post('/getAll', (req, res) => {
 router.post('/getById', (req, res) => {
     var body = req.body
     console.log(body)
-    try{
+    try {
         jwt.verify(body.token, key)
         var sql = `select * from prof where id = ${ss.escape(body.id)} order by id desc`;
-        console.log("query: "+sql)
+        console.log("query: " + sql)
         con.query(sql, (err, result, fields) => {
-            if(err){
+            if (err) {
                 res.json({
                     success: false,
                     msg: "parameter invalid"
                 })
-            }else{
+            } else {
                 var arr = [
                     {
                         label: 'Код',
@@ -87,7 +87,7 @@ router.post('/getById', (req, res) => {
                         value: result[0].price
                     },
                 ]
-                var obj ={
+                var obj = {
                     code: 'Код',
                     name_en: 'Нэр',
                     name_mn: 'Нэр (ENG)',
@@ -101,7 +101,7 @@ router.post('/getById', (req, res) => {
                 })
             }
         })
-    }catch{
+    } catch {
         res.json({
             success: false,
             msg: "parameter invalid"
@@ -112,24 +112,24 @@ router.post('/getById', (req, res) => {
 router.post('/add', (req, res) => {
     var body = req.body
     console.log(body)
-    try{
+    try {
         var sql = `insert into prof(code, period_id, letter_time, name_mn, name_en, price)
         values(${ss.escape(body.data[0].value)}, ${ss.escape(body.data[3].id)}, ${ss.escape(body.data[3].default)}, ${ss.escape(body.data[1].value)}, ${ss.escape(body.data[2].value)}, ${ss.escape(body.data[4].value)});`;
-        console.log("query: "+sql)
+        console.log("query: " + sql)
         con.query(sql, (err, result, fields) => {
-            if(err){
+            if (err) {
                 res.json({
                     success: false,
                     msg: "parameter invalid"
                 })
-            }else{
+            } else {
                 res.json({
                     success: true,
                     msg: "Амжилттай",
                 })
             }
         })
-    }catch{
+    } catch {
         res.json({
             success: false,
             msg: "parameter invalid"
@@ -140,23 +140,23 @@ router.post('/add', (req, res) => {
 router.post('/edit', (req, res) => {
     var body = req.body
     console.log(body)
-    try{
+    try {
         var sql = `update prof set period_id = ${ss.escape(body.data[3].id)}, code = ${ss.escape(body.data[0].value)}, letter_time = ${ss.escape(body.data[3].default)}, name_mn = ${ss.escape(body.data[2].value)}, name_en = ${ss.escape(body.data[1].value)}, price = ${ss.escape(body.data[4].value)} where id = ${ss.escape(body.id)};`;
-        console.log("query: "+sql)
+        console.log("query: " + sql)
         con.query(sql, (err, result, fields) => {
-            if(err){
+            if (err) {
                 res.json({
                     success: false,
                     msg: "parameter invalid"
                 })
-            }else{
+            } else {
                 res.json({
                     success: true,
                     msg: "Амжилттай засварллаа",
                 })
             }
         })
-    }catch{
+    } catch {
         res.json({
             success: false,
             msg: "parameter invalid"
@@ -167,23 +167,23 @@ router.post('/edit', (req, res) => {
 router.post('/delete', (req, res) => {
     var body = req.body
     console.log(body)
-    try{
+    try {
         var sql = `delete from prof where id = ${ss.escape(body.id)}`;
-        console.log("query: "+sql)
+        console.log("query: " + sql)
         con.query(sql, (err, result, fields) => {
-            if(err){
+            if (err) {
                 res.json({
                     success: false,
                     msg: "parameter invalid"
                 })
-            }else{
+            } else {
                 res.json({
                     success: true,
                     msg: "Амжилттай устаглаа",
                 })
             }
         })
-    }catch{
+    } catch {
         res.json({
             success: false,
             msg: "parameter invalid"
