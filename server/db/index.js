@@ -4,9 +4,9 @@ dotenv.config();
 
 var con = mysql.createConnection({
     host: process.env.DB_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME
 });
 con.connect((error) => {
     if (error) {
