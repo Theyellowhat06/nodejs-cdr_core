@@ -6,23 +6,12 @@ const ss = require("sqlstring");
 
 const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 
-router.get("/callers", (req, res) => {
+router.post("/updateImage", (req, res) => {
+  const {caller_id, icon} = req.body
+  console.log('update')
   const sql = ss.format(
-    `SELECT DISTINCT
-          cdr.Caller_id, count, c.icon, c.info
-      FROM
-          (SELECT 
-              cdr.Caller_id, COUNT(cdr.Caller_id) AS count
-          FROM
-              cdr
-          WHERE
-              Timestamp BETWEEN ? AND ?
-          GROUP BY cdr.Caller_id) AS cdr
-              INNER JOIN
-          contacts c ON cdr.Caller_id = c.caller_id
-      ORDER BY count DESC
-      LIMIT 50`,
-    [req.query.from.split("T")[0], req.query.to.split("T")[0]]
+    `update contacts set icon = ? where caller_id = ?`,
+    [icon, caller_id]
   );
   // var sql = `select id, fname, lname, username, permission from users where username = ${ss.escape(body.username)} and password = ${ss.escape(body.password)}`;
   console.log("aquery: " + sql);
@@ -35,21 +24,35 @@ router.get("/callers", (req, res) => {
         msg: "parameter invalid",
       });
     } else {
-      if (result.length > 0) {
-        console.log("hoho");
         res.json({
           success: true,
-          result: result,
         });
-      } else {
-        res.json({
-          success: true,
-          msg: "Хэрэглэгчийн нэр эсвэл нууц үг буруу байна",
-        });
-      }
     }
   });
 });
+
+router.post("/info", (req, res) => {
+    const {caller_id, info} = req.body
+    const sql = ss.format(
+      `update contacts set info = ? where caller_id = ?`,
+      [info, caller_id]
+    );
+    con.query(sql, async (err, result, fields) => {
+      console.log('result');
+      if (err) {
+        console.log('aa')
+        res.json({
+          success: false,
+          msg: "parameter invalid",
+        });
+      } else {
+          res.json({
+            success: true,
+          });
+      }
+    });
+  });
+
 
 router.post("/calls", (req, res) => {
   const body = req.body;
