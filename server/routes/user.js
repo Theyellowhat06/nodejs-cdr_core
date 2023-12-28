@@ -7,6 +7,7 @@ const ss = require("sqlstring");
 const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 
 router.get("/callers", (req, res) => {
+  const {from, to, id, info} = req.query;
   const sql = ss.format(
     `SELECT DISTINCT
           cdr.Caller_id, count, c.icon, c.info
@@ -17,12 +18,14 @@ router.get("/callers", (req, res) => {
               cdr
           WHERE
               Timestamp BETWEEN ? AND ?
+              AND cdr.caller_id like ?
           GROUP BY cdr.Caller_id) AS cdr
               INNER JOIN
           contacts c ON cdr.Caller_id = c.caller_id
+          where IFNULL(c.info, '') like ?
       ORDER BY count DESC
       LIMIT 50`,
-    [req.query.from.split("T")[0], req.query.to.split("T")[0]]
+    [from.split("T")[0], to.split("T")[0], `%${id}%`, `%${info}%`]
   );
   // var sql = `select id, fname, lname, username, permission from users where username = ${ss.escape(body.username)} and password = ${ss.escape(body.password)}`;
   console.log("aquery: " + sql);
@@ -55,10 +58,43 @@ router.post("/calls", (req, res) => {
   const body = req.body;
   console.log(body.ids);
   const sql = ss.format(
-    "select distinct cdr.Caller_id, cdr.Receiver_id, cdr.Duration_s, c.icon, c.info from cdr inner join contacts c on cdr.Caller_id = c.caller_id where cdr.Caller_id in (?)",
+    `SELECT DISTINCT
+    cdr.Caller_id,
+    cdr.Receiver_id,
+    cdr.Duration_s,
+    c.icon,
+    c.info,
+    rc.icon as rc_icon,
+    rc.info as rc_info
+FROM
+    cdr
+        INNER JOIN
+    contacts c ON cdr.Caller_id = c.caller_id
+        INNER JOIN
+    contacts rc ON cdr.Receiver_id = rc.caller_id
+WHERE
+    cdr.Caller_id IN (?)`,
     [body.ids]
   );
-  // var sql = `select id, fname, lname, username, permission from users where username = ${ss.escape(body.username)} and password = ${ss.escape(body.password)}`;
+  const sql_received = ss.format(
+    `SELECT DISTINCT
+    cdr.Caller_id,
+    cdr.Receiver_id,
+    cdr.Duration_s,
+    c.icon,
+    c.info,
+    rc.icon as rc_icon,
+    rc.info as rc_info
+FROM
+    cdr
+        INNER JOIN
+    contacts c ON cdr.Caller_id = c.caller_id
+        INNER JOIN
+    contacts rc ON cdr.Receiver_id = rc.caller_id
+WHERE
+    cdr.Receiver_id IN (?)`,
+    [body.ids]
+  );
   console.log("query: " + sql);
   con.query(sql, (err, result, fields) => {
     if (err) {
@@ -67,13 +103,20 @@ router.post("/calls", (req, res) => {
         msg: "parameter invalid",
       });
     } else {
-      if (result.length > 0) {
-        console.log("hoho");
-        res.json({
-          success: true,
-          result: result,
-        });
-      }
+      con.query(sql_received, (err, result_recieved) => {
+        if (err) {
+          res.json({
+            success: false,
+            msg: "parameter invalid",
+          });
+        }else{
+          res.json({
+            success: true,
+            result: result,
+            recieved_calls: result_recieved
+          });
+        }
+      })
     }
   });
 });
