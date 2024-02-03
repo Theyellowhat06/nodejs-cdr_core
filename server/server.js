@@ -7,7 +7,8 @@ const teacher = require("./routes/teacher");
 const student = require("./routes/student");
 const schedule = require("./routes/schedule");
 const contacts = require("./routes/contacts");
-const dotenv = require('dotenv');
+const bank = require("./routes/bank");
+const dotenv = require("dotenv");
 dotenv.config();
 var cors = require("cors");
 
@@ -22,6 +23,7 @@ const port = 3050;
 app.use(express.json());
 
 app.use("/user", user);
+app.use("/bank", bank);
 app.use("/prof", prof);
 app.use("/teacher", teacher);
 app.use("/student", student);
