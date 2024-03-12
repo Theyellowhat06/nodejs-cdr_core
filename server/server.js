@@ -9,8 +9,10 @@ const schedule = require("./routes/schedule");
 const contacts = require("./routes/contacts");
 const bank = require("./routes/bank");
 const dotenv = require("dotenv");
+const connectDB = require('./db/mongodb');
 dotenv.config();
 var cors = require("cors");
+
 
 // console.log(process.env)
 const app = express();
@@ -19,6 +21,8 @@ app.use(express.json({ limit: "50mb" }));
 
 const hostname = "127.0.0.1";
 const port = 3050;
+
+connectDB();
 
 app.use(express.json());
 

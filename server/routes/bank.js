@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const con = require("../db/index");
 const ss = require("sqlstring");
+const BankAccountsProfile = require("../model/bank_accounts_profile");
 
 const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 
@@ -280,5 +281,34 @@ router.post("/remove_all_records", async (req, res) => {
     }
   });
 });
+
+router.get(
+  "/account_profile/:account_number",
+  async ({ params: { account_number } }, res) => {
+    try {
+      const data = await BankAccountsProfile.find({ account_number });
+      res.json({ result: data[0], success: true });
+    } catch (error) {
+      res.json({ success: false, error });
+    }
+  }
+);
+
+router.post(
+  "/account_profile/:account_number",
+  async ({ params: { account_number }, body }, res) => {
+    console.log(account_number, body);
+    try {
+      const result = await BankAccountsProfile.findOneAndUpdate(
+        { account_number },
+        body,
+        { upsert: true, new: true }
+      );
+      res.json({ success: true, result });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  }
+);
 
 module.exports = router;
