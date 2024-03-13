@@ -7,12 +7,12 @@ const teacher = require("./routes/teacher");
 const student = require("./routes/student");
 const schedule = require("./routes/schedule");
 const contacts = require("./routes/contacts");
+const people = require("./routes/people");
 const bank = require("./routes/bank");
 const dotenv = require("dotenv");
-const connectDB = require('./db/mongodb');
+const connectDB = require("./db/mongodb");
 dotenv.config();
 var cors = require("cors");
-
 
 // console.log(process.env)
 const app = express();
@@ -33,5 +33,6 @@ app.use("/teacher", teacher);
 app.use("/student", student);
 app.use("/schedule", schedule);
 app.use("/contacts", contacts);
+app.use("/people", people);
 
 app.listen(port);

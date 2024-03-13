@@ -53,50 +53,6 @@ router.post("/info", (req, res) => {
   });
 });
 
-router.post("/description", (req, res) => {
-  const { caller_id, description } = req.body;
-
-  const sql = ss.format(
-    `select * from people where account_number = ?`,
-    caller_id
-  );
-  con.query(sql, (err, result, fields) => {
-    console.log(sql);
-    if (err) {
-      res.json({
-        success: false,
-        msg: "parameter invalid",
-      });
-    } else {
-      console.log(result);
-      let sql;
-      if (result.length > 0) {
-        sql = ss.format(`update people set description = ? where id = ?`, [
-          description,
-          result[0].id,
-        ]);
-      } else {
-        sql = ss.format(
-          `insert into people(description, account_number) values(?,?)`,
-          [description, caller_id]
-        );
-      }
-      con.query(sql, (err, result, fields) => {
-        if (err) {
-          res.json({
-            success: false,
-            msg: "parameter invalid",
-          });
-        } else {
-          res.json({
-            success: true,
-          });
-        }
-      });
-    }
-  });
-});
-
 router.post("/calls", (req, res) => {
   const body = req.body;
   console.log(body.ids);

@@ -11,7 +11,7 @@ router.get("/people", (req, res) => {
   const { from, to, id, info } = req.query;
   const sql = ss.format(
     `SELECT DISTINCT
-    bank.bank_account_number, count, p.image, p.description
+    bank.bank_account_number, count, p.icon, p.info
 FROM
     (SELECT 
         bank_statements.sender_account_number AS bank_account_number,
@@ -35,7 +35,7 @@ FROM
         LEFT JOIN
     people p ON bank.bank_account_number = p.account_number
 WHERE
-    IFNULL(p.description, '') LIKE ?
+    IFNULL(p.info, '') LIKE ?
 ORDER BY count DESC
 LIMIT 50`,
     [
@@ -85,10 +85,10 @@ router.post("/calls", (req, res) => {
     IF(bank_statements.credit_amount > 0,
         bank_statements.credit_amount,
         bank_statements.debit_amount) AS amount,
-    p.image,
-    p.description,
-    rp.image AS r_image,
-    rp.description AS r_description
+    p.icon,
+    p.info,
+    rp.icon AS r_icon,
+    rp.info AS r_info
 FROM
     bank_statements
         LEFT JOIN
@@ -106,10 +106,10 @@ WHERE
     IF(bank_statements.credit_amount > 0,
         bank_statements.credit_amount,
         bank_statements.debit_amount) AS amount,
-    p.image,
-    p.description,
-    rp.image AS r_image,
-    rp.description AS r_description
+    p.icon,
+    p.info,
+    rp.icon AS r_icon,
+    rp.info AS r_info
 FROM
     bank_statements
         left JOIN
