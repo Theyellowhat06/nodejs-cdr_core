@@ -9,7 +9,7 @@ const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 router.post("/updateImage", (req, res) => {
   const { caller_id, icon } = req.body;
   console.log("update");
-  const sql = ss.format(`update people set image = ? where caller_id = ?`, [
+  const sql = ss.format(`update people set icon = ? where account_number = ?`, [
     icon,
     caller_id,
   ]);
@@ -18,7 +18,7 @@ router.post("/updateImage", (req, res) => {
   con.query(sql, async (err, result, fields) => {
     console.log("result");
     if (err) {
-      console.log("aa");
+      console.log(err.message);
       res.json({
         success: false,
         msg: "parameter invalid",
