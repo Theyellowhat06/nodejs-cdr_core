@@ -321,7 +321,10 @@ router.get("/calls_by_receiver", (req, res) => {
 });
 
 router.post("/remove_all_records", async (req, res) => {
-  const sql = ss.format("delete from cdr where id > 0");
+  const sql = ss.format("delete from bank_statements where id > 0");
+
+  console.log('deleting')
+  console.log(sql)
 
   con.query(sql, (err, result, fields) => {
     if (err) {
