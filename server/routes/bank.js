@@ -75,75 +75,128 @@ LIMIT 50`,
   });
 });
 
-router.post("/calls", (req, res) => {
-  const body = req.body;
-  console.log(body.ids);
-  const sql = ss.format(
-    `SELECT DISTINCT
-    bank_statements.sender_account_number,
-    bank_statements.receiver_account_number,
-    IF(bank_statements.credit_amount > 0,
-        bank_statements.credit_amount,
-        bank_statements.debit_amount) AS amount,
-    p.icon,
-    p.info,
-    rp.icon AS r_icon,
-    rp.info AS r_info
-FROM
-    bank_statements
-        LEFT JOIN
-    people p ON bank_statements.sender_account_number = p.account_number
-        LEFT JOIN
-    people rp ON bank_statements.receiver_account_number = rp.account_number
-WHERE
-    bank_statements.sender_account_number IN (?);`,
-    [body.ids]
-  );
-  const sql_received = ss.format(
-    `SELECT DISTINCT
-    bank_statements.sender_account_number,
-    bank_statements.receiver_account_number,
-    IF(bank_statements.credit_amount > 0,
-        bank_statements.credit_amount,
-        bank_statements.debit_amount) AS amount,
-    p.icon,
-    p.info,
-    rp.icon AS r_icon,
-    rp.info AS r_info
-FROM
-    bank_statements
-        left JOIN
-    people p ON bank_statements.sender_account_number = p.account_number
-        left JOIN
-    people rp ON bank_statements.receiver_account_number = rp.account_number
-WHERE
-    bank_statements.receiver_account_number IN (?)`,
-    [body.ids]
-  );
-  console.log("query: " + sql);
-  con.query(sql, (err, result, fields) => {
-    if (err) {
-      res.json({
-        success: false,
-        msg: "parameter invalid",
-      });
-    } else {
-      con.query(sql_received, (err, result_recieved) => {
-        if (err) {
-          res.json({
-            success: false,
-            msg: "parameter invalid",
-          });
-        } else {
-          res.json({
-            success: true,
-            result: result,
-            recieved_calls: result_recieved,
-          });
-        }
-      });
-    }
-  });
+router.post("/calls", ({body}, res) => {
+  // const body = req.body;
+  // console.log(body.ids);
+
+  if(body.ids.length < 2){
+    res.json({
+      success: false,
+      msg: "should pick 2 or more ids",
+    });
+    return
+  }
+
+    const statements = ss.format(`
+      select distinct sender_account_number, receiver_account_number, 
+          IF(bank_statements.credit_amount > 0,
+              bank_statements.credit_amount,
+              bank_statements.debit_amount) AS amount
+      from bank_statements 
+      where bank_statements.sender_account_number IN (?)`, [body.ids, body.ids])
+
+    const sql2 = ss.format(
+      `select distinct table1.sender_account_number,
+          table1.receiver_account_number,
+          table1.amount 
+      from (${statements}) as table1 
+          cross join (${statements}) as table2
+      where table1.receiver_account_number = table2.receiver_account_number 
+          and table1.sender_account_number <> table2.sender_account_number`,
+    );
+
+    const sql = ss.format(
+      `SELECT DISTINCT
+      bank_statements.sender_account_number,
+      bank_statements.receiver_account_number,
+      amount,
+      p.icon,
+      p.info,
+      rp.icon AS r_icon,
+      rp.info AS r_info
+  FROM
+      (${sql2}) as bank_statements
+          LEFT JOIN
+      people p ON bank_statements.sender_account_number = p.account_number
+          LEFT JOIN
+      people rp ON bank_statements.receiver_account_number = rp.account_number;`
+    );
+
+    const sql_temp = ss.format(
+      `SELECT DISTINCT
+      bank_statements.sender_account_number,
+      bank_statements.receiver_account_number,
+      IF(bank_statements.credit_amount > 0,
+          bank_statements.credit_amount,
+          bank_statements.debit_amount) AS amount,
+      p.icon,
+      p.info,
+      rp.icon AS r_icon,
+      rp.info AS r_info
+  FROM
+      bank_statements
+          LEFT JOIN
+      people p ON bank_statements.sender_account_number = p.account_number
+          LEFT JOIN
+      people rp ON bank_statements.receiver_account_number = rp.account_number
+  WHERE
+      bank_statements.sender_account_number IN (?) or bank_statements.receiver_account_number IN (?);`,
+      [body.ids, body.ids]
+    );
+    
+  //   const sql_received = ss.format(
+  //     `SELECT DISTINCT
+  //     bank_statements.sender_account_number,
+  //     bank_statements.receiver_account_number,
+  //     IF(bank_statements.credit_amount > 0,
+  //         bank_statements.credit_amount,
+  //         bank_statements.debit_amount) AS amount,
+  //     p.icon,
+  //     p.info,
+  //     rp.icon AS r_icon,
+  //     rp.info AS r_info
+  // FROM
+  //     bank_statements
+  //         left JOIN
+  //     people p ON bank_statements.sender_account_number = p.account_number
+  //         left JOIN
+  //     people rp ON bank_statements.receiver_account_number = rp.account_number
+  // WHERE
+  //     bank_statements.receiver_account_number IN (?)`,
+  //     [body.ids]
+  //   );
+    console.log("query: " + sql);
+    con.query(sql, (err, result, fields) => {
+      if (err) {
+        console.log(err.message)
+        res.json({
+          success: false,
+          msg: "parameter invalid",
+          error: err.message
+        });
+      } else {
+        // con.query(sql_received, (err, result_recieved) => {
+        //   if (err) {
+        //     res.json({
+        //       success: false,
+        //       msg: "parameter invalid",
+        //     });
+        //   } else {
+        //     res.json({
+        //       success: true,
+        //       result: result,
+        //       recieved_calls: result_recieved,
+        //     });
+        //   }
+        // });
+        res.json({
+          success: true,
+          result: result,
+          // recieved_calls: result_recieved,
+        });
+      }
+    });
+  
 });
 const sleep = (ms) => {
   return new Promise((resolve) => {
