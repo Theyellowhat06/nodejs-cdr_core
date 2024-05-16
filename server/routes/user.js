@@ -35,21 +35,24 @@ router.get("/callers", (req, res) => {
       console.log('aa')
       res.json({
         success: false,
-        msg: "parameter invalid",
+        msg: err.message,
       });
     } else {
-      if (result.length > 0) {
-        console.log("hoho");
-        res.json({
-          success: true,
-          result: result,
-        });
-      } else {
-        res.json({
-          success: true,
-          msg: "Хэрэглэгчийн нэр эсвэл нууц үг буруу байна",
-        });
-      }
+      res.json({
+        success: true,
+        result: result,
+      });
+      // if (result.length > 0) {
+      //   res.json({
+      //     success: true,
+      //     result: result,
+      //   });
+      // } else {
+      //   res.json({
+      //     success: true,
+      //     msg: "Хэрэглэгчийн нэр эсвэл нууц үг буруу байна",
+      //   });
+      // }
     }
   });
 });

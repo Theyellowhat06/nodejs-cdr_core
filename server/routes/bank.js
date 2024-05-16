@@ -56,7 +56,7 @@ LIMIT 50`,
       console.log("aa");
       res.json({
         success: false,
-        msg: "parameter invalid",
+        msg: err.message,
       });
     } else {
       if (result.length > 0) {
