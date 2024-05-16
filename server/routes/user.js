@@ -9,23 +9,7 @@ const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 router.get("/callers", (req, res) => {
   const {from, to, id, info} = req.query;
   const sql = ss.format(
-    `SELECT DISTINCT
-          cdr.Caller_id, count, c.icon, c.info
-      FROM
-          (SELECT 
-              cdr.Caller_id, COUNT(cdr.Caller_id) AS count
-          FROM
-              cdr
-          WHERE
-              Timestamp BETWEEN ? AND ?
-              AND cdr.caller_id like ?
-          GROUP BY cdr.Caller_id) AS cdr
-              INNER JOIN
-          contacts c ON cdr.Caller_id = c.caller_id
-          where IFNULL(c.info, '') like ?
-      ORDER BY count DESC
-      LIMIT 50`,
-    [from.split("T")[0], to.split("T")[0], `%${id}%`, `%${info}%`]
+    `select * from people;`
   );
   // var sql = `select id, fname, lname, username, permission from users where username = ${ss.escape(body.username)} and password = ${ss.escape(body.password)}`;
   console.log("aquery: " + sql);
