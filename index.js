@@ -10,7 +10,7 @@ const contacts = require("./server/routes/contacts");
 const people = require("./server/routes/people");
 const bank = require("./server/routes/bank");
 const dotenv = require("dotenv");
-const connectDB = require("./db/mongodb");
+const connectDB = require("./server/db/mongodb");
 dotenv.config();
 var cors = require("cors");
 
