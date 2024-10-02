@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const con = require("../db/index");
 const ss = require("sqlstring");
-const bcrtypt = require("bcrypt");
+const bcrtypt = require("bcryptjs");
 
 const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 
