@@ -3,11 +3,12 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const con = require("../db/index");
 const ss = require("sqlstring");
+const bcrtypt = require("bcrypt");
 
 const key = `mq0)l2t[8G}(=gvpOP$&oc'O,i_E^<`;
 
 router.get("/callers", (req, res) => {
-  const {from, to, id, info} = req.query;
+  const { from, to, id, info } = req.query;
   const sql = ss.format(
     `SELECT DISTINCT
           cdr.Caller_id, count, c.icon, c.info
@@ -30,9 +31,9 @@ router.get("/callers", (req, res) => {
   // var sql = `select id, fname, lname, username, permission from users where username = ${ss.escape(body.username)} and password = ${ss.escape(body.password)}`;
   console.log("aquery: " + sql);
   con.query(sql, async (err, result, fields) => {
-    console.log('result');
+    console.log("result");
     if (err) {
-      console.log('aa')
+      console.log("aa");
       res.json({
         success: false,
         msg: err.message,
@@ -112,14 +113,14 @@ WHERE
             success: false,
             msg: "parameter invalid",
           });
-        }else{
+        } else {
           res.json({
             success: true,
             result: result,
-            recieved_calls: result_recieved
+            recieved_calls: result_recieved,
           });
         }
-      })
+      });
     }
   });
 });
@@ -137,11 +138,11 @@ const formatExcelDate = (dateNumber) => {
   const dateString = `${date.getFullYear()}-${(date.getMonth() + 1)
     .toString()
     .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
-      .getHours()
-      .toString()
-      .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    .getHours()
+    .toString()
+    .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
   // console.log(dateString);
-  return dateString
+  return dateString;
 };
 
 router.post("/excel_import", async (req, res) => {
@@ -176,7 +177,7 @@ router.post("/excel_import", async (req, res) => {
   });
 });
 
-router.get('/calls_by_date', (req, res) => {
+router.get("/calls_by_date", (req, res) => {
   const sql = ss.format(
     "select DATE_FORMAT(Timestamp, '%Y-%m-%d %H') as formated_date, count(id) as total_call, max(Duration_s) as max_dura, min(Duration_s) as min_dura, avg(Duration_s) as avg_dura from cdr where Timestamp between ? and ? group by formated_date order by formated_date",
     [req.query.from.split("T")[0], req.query.to.split("T")[0]]
@@ -194,14 +195,14 @@ router.get('/calls_by_date', (req, res) => {
       });
     }
   });
-})
+});
 
-router.get('/calls_by_receiver', (req, res) => {
+router.get("/calls_by_receiver", (req, res) => {
   const sql = ss.format(
     "select * from cdr where Receiver_id = ? and Caller_id in (?)",
     [req.query.target, req.query.sources]
   );
-  console.log(sql)
+  console.log(sql);
   con.query(sql, (err, result, fields) => {
     if (err) {
       res.json({
@@ -215,13 +216,10 @@ router.get('/calls_by_receiver', (req, res) => {
       });
     }
   });
-})
+});
 
 router.post("/remove_all_records", async (req, res) => {
-
-  const sql = ss.format(
-    "delete from cdr where id > 0",
-  );
+  const sql = ss.format("delete from cdr where id > 0");
 
   con.query(sql, (err, result, fields) => {
     if (err) {
@@ -231,6 +229,217 @@ router.post("/remove_all_records", async (req, res) => {
       });
     } else {
       res.json({ success: true });
+    }
+  });
+});
+
+router.get('/me', (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  jwt.verify(token, key, (err, decoded) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: "token invalid",
+      });
+    } else {
+      const sql = ss.format(`select id, firstname, lastname, username, created_at, updated_at, roles from users where id = ?`, [decoded.id]);
+      con.query(sql, async (err, result, fields) => {
+        if (err) {
+          res.json({
+            success: false,
+            msg: err.message,
+          });
+        } else {
+          res.json({
+            success: true,
+            me: result[0],
+          });
+        }
+      });
+    }
+  });
+})
+
+router.post("/login", (req, res) => {
+  const body = req.body;
+  const sql = ss.format(`select * from users where username = ?`, [body.username]);
+  con.query(sql, async (err, result, fields) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: err.message,
+      });
+    } else {
+      if (result.length > 0) {
+        if (!compareHash(body.password, result[0].password)) {
+          res.json({
+            success: false,
+            msg: "Хэрэглэгчийн нэр эсвэл нууц үг буруу байна",
+          });
+        }else{
+          const token = jwt.sign(
+            {
+              id: result[0].id,
+              username: result[0].username,
+              roles: result[0].roles,
+            },
+            key,
+            { expiresIn: "30d" }
+          );
+          res.json({
+            success: true,
+            token: token,
+            user: result[0],
+          });
+        }
+      } else {
+        res.json({
+          success: true,
+          msg: "Хэрэглэгчийн нэр эсвэл нууц үг буруу байна",
+        });
+      }
+    }
+  });
+});
+
+router.get("/all", (req, res) => {
+  const sql = `select u.id, u.firstname, u.lastname, u.username, u.roles, u.created_at, u.updated_at, cr.username as created_by, up.username as updated_by
+                  from users u 
+                  left join users cr on u.created_by_id = cr.id
+                  left join users up on u.updated_by_id = up.id
+                  order by u.created_at desc`;
+  con.query(sql, async (err, result, fields) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: err.message,
+      });
+    } else {
+      res.json({
+        success: true,
+        result: result,
+      });
+    }
+  });
+});
+
+function toHash(str){
+  return bcrtypt.hashSync(str, 10);
+}
+
+function compareHash(str, hash){
+  return bcrtypt.compareSync(str, hash);
+}
+
+router.post("/create", (req, res) => {
+  const body = req.body;
+  const sql = ss.format(
+    `insert into users(firstname, lastname, username, password, roles, created_by_id) values(?, ?, ?, ?, ?, ?)`,
+    [
+      body.firstname,
+      body.lastname,
+      body.username,
+      toHash(body.password),
+      rolesToString(body.roles),
+      body.createdById
+    ]
+  );
+  con.query(
+    "select * from users where username = ?",
+    [body.username],
+    (err, result, fields) => {
+      if (result.length > 0) {
+        res.json({
+          success: false,
+          msg: "Хэрэглэгч бүртгэгдсэн байна",
+        });
+      } else {
+        con.query(sql, async (err, result, fields) => {
+          if (err) {
+            res.json({
+              success: false,
+              msg: err.message,
+            });
+          } else {
+            res.json({
+              success: true,
+            });
+          }
+        });
+      }
+    }
+  );
+});
+
+router.post("/delete", (req, res) => {
+  const body = req.body;
+  const sql = ss.format(`delete from users where id = ?`, [body.id]);
+  con.query(sql, async (err, result, fields) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: err.message,
+      });
+    } else {
+      res.json({
+        success: true,
+      });
+    }
+  });
+});
+
+function rolesToString(roles) {
+  if (roles) {
+    return roles.join(",");
+  }
+  return null;
+}
+
+router.post("/update", (req, res) => {
+  const body = req.body;
+  const sql = ss.format(
+    `update users set firstname = ?, lastname = ?, username = ?, roles = ?, updated_by_id = ?, updated_at = current_timestamp where id = ?`,
+    [
+      body.firstname,
+      body.lastname,
+      body.username,
+      rolesToString(body.roles),
+      body.updatedById,
+      body.id,
+    ]
+  );
+  console.log(sql);
+  con.query(sql, async (err, result, fields) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: err.message,
+      });
+    } else {
+      res.json({
+        success: true,
+      });
+    }
+  });
+});
+
+router.post("/resetPassword", (req, res) => {
+  const body = req.body;
+  const sql = ss.format(`update users set password = ?, updated_by_id = ?, updated_at = current_timestamp where id = ?`, [
+    toHash(body.password),
+    body.updatedById,
+    body.id,
+  ]);
+  con.query(sql, async (err, result, fields) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: err.message,
+      });
+    } else {
+      res.json({
+        success: true,
+      });
     }
   });
 });
